@@ -3,143 +3,269 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Study Tracker with Visible Stats</title>
+  <title>Study Tracker</title>
   <style>
+    /* Apple-inspired base styles */
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
       margin: 0;
       padding: 20px;
       display: flex;
       justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
     .container {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
       width: 100%;
       max-width: 600px;
-      padding: 20px;
+      padding: 25px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
     }
     h1, h2, h3 {
-      color: #333;
-      margin-bottom: 10px;
+      color: #1d1d1f;
+      margin-bottom: 15px;
+      font-weight: 600;
     }
+    h1 {
+      font-size: 2em;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    /* Task Form */
     .task-form {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: 15px;
+      margin-bottom: 25px;
     }
     .task-form input {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      padding: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      background: rgba(245, 245, 245, 0.8);
+      font-size: 1em;
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+    .task-form input:focus {
+      outline: none;
+      border-color: #007aff;
+      background: #fff;
     }
     .task-form button {
-      padding: 10px;
+      padding: 12px;
       border: none;
-      border-radius: 4px;
-      background: #4caf50;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #007aff, #00c6ff);
       color: white;
       font-size: 1em;
+      font-weight: 500;
       cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
     }
     .task-form button:hover {
-      background: #45a049;
+      transform: scale(1.03);
+      opacity: 0.95;
     }
+
+    /* Task List */
     .task-list {
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
     .task-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px;
-      border-bottom: 1px solid #eee;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      transition: transform 0.3s ease, background 0.3s ease;
+      animation: slideIn 0.3s ease-out;
     }
-    .task-item:last-child {
-      border-bottom: none;
+    .task-item:hover {
+      transform: translateX(5px);
+      background: rgba(255, 255, 255, 1);
     }
+    .task-item button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #34c759;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .task-item button:hover {
+      transform: scale(1.05);
+    }
+
+    /* Timer Section */
     .timer-section {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 15px;
+      animation: fadeIn 0.5s ease;
     }
     .timer-display {
-      font-size: 2em;
+      font-size: 2.5em;
+      font-weight: 700;
+      color: #1d1d1f;
       margin: 10px 0;
+      letter-spacing: -1px;
     }
     .countdown-display {
       font-size: 1.5em;
-      color: #d9534f;
-      margin-bottom: 10px;
+      color: #ff2d55;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
     .btn-group button {
-      padding: 10px;
-      margin: 5px;
+      padding: 10px 20px;
       border: none;
-      border-radius: 4px;
-      background: #007bff;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #5856d6, #007aff);
       color: white;
+      font-weight: 500;
       cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
     }
     .btn-group button:hover {
-      background: #0069d9;
+      transform: scale(1.05);
+      opacity: 0.9;
     }
     .deadline-edit {
-      margin-top: 10px;
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
     }
     .deadline-edit input {
-      padding: 8px;
-      width: 60%;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      margin-right: 5px;
+      padding: 10px;
+      width: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      background: rgba(245, 245, 245, 0.8);
+      transition: border-color 0.3s ease;
     }
+    .deadline-edit input:focus {
+      outline: none;
+      border-color: #007aff;
+    }
+    .deadline-edit button {
+      padding: 10px 15px;
+      background: #ff9500;
+      border-radius: 10px;
+      color: white;
+      font-weight: 500;
+      transition: transform 0.2s ease;
+    }
+    .deadline-edit button:hover {
+      transform: scale(1.05);
+    }
+
+    /* Distraction Section */
     .distraction-section {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 15px;
+      animation: fadeIn 0.5s ease;
+    }
+    .distraction-section p {
+      margin: 0 0 10px;
+      font-weight: 500;
+      color: #1d1d1f;
     }
     .distraction-section input {
-      padding: 8px;
+      padding: 10px;
       width: 70%;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      margin-right: 5px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      background: rgba(245, 245, 245, 0.8);
+      transition: border-color 0.3s ease;
+    }
+    .distraction-section input:focus {
+      outline: none;
+      border-color: #007aff;
     }
     .distraction-section button {
-      padding: 8px 12px;
+      padding: 10px 20px;
       border: none;
-      border-radius: 4px;
-      background: #f0ad4e;
+      border-radius: 10px;
+      background: #ff2d55;
       color: white;
+      font-weight: 500;
       cursor: pointer;
+      transition: transform 0.2s ease;
     }
+    .distraction-section button:hover {
+      transform: scale(1.05);
+    }
+
+    /* History and Stats Sections */
     .history-section, .stats-section {
-      margin-top: 20px;
+      margin-top: 25px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 15px;
+      transition: transform 0.3s ease;
     }
-    .history-section ul, .stats-section div {
+    .history-section:hover, .stats-section:hover {
+      transform: translateY(-3px);
+    }
+    .history-section ul {
       padding: 0;
+      list-style: none;
     }
     .history-section li {
-      background: #fafafa;
-      border: 1px solid #eee;
-      padding: 10px;
-      margin-bottom: 5px;
-      border-radius: 4px;
-      font-size: 0.9em;
+      padding: 12px;
+      background: rgba(245, 245, 245, 0.9);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font-size: 0.95em;
+      color: #1d1d1f;
+      animation: slideIn 0.3s ease-out;
     }
     .stats-section {
-      background: #e9ecef;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    .stats-section h3 {
-      margin-top: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(235, 235, 245, 0.9));
     }
     .stats-section p {
-      margin: 5px 0;
+      margin: 8px 0;
       font-size: 1em;
+      color: #1d1d1f;
+    }
+    .stats-section strong {
+      color: #007aff;
+    }
+
+    /* Animations */
+    @keyframes slideIn {
+      from { transform: translateX(-20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
@@ -396,34 +522,24 @@
     function renderStats() {
       const statsDisplay = document.getElementById('stats-display');
       statsDisplay.innerHTML = "";
-
       if (history.length === 0) {
         statsDisplay.innerHTML = "<p>No tasks completed yet. Start completing tasks to see stats!</p>";
         return;
       }
-
       const now = new Date();
       const oneWeekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
       const oneMonthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
-
-      // Filter by date range
       const filterByDate = (startDate) => history.filter(record => new Date(record.completedAt) >= startDate);
-
-      // Weekly stats
       const weeklyRecords = filterByDate(oneWeekAgo);
       const weeklyTasks = weeklyRecords.length;
       const weeklyTimeSpent = weeklyRecords.reduce((sum, r) => sum + parseTimeToSeconds(r.timeSpent), 0);
       const weeklyDistractions = weeklyRecords.reduce((sum, r) => sum + r.distractions.length, 0);
       const weeklyAvgDistractions = weeklyTasks > 0 ? (weeklyDistractions / weeklyTasks).toFixed(2) : 0;
-
-      // Monthly stats
       const monthlyRecords = filterByDate(oneMonthAgo);
       const monthlyTasks = monthlyRecords.length;
       const monthlyTimeSpent = monthlyRecords.reduce((sum, r) => sum + parseTimeToSeconds(r.timeSpent), 0);
       const monthlyDistractions = monthlyRecords.reduce((sum, r) => sum + r.distractions.length, 0);
       const monthlyAvgDistractions = monthlyTasks > 0 ? (monthlyDistractions / monthlyTasks).toFixed(2) : 0;
-
-      // Display stats
       statsDisplay.innerHTML = `
         <p><strong>Last 7 Days:</strong> ${weeklyTasks} tasks completed, ${formatTime(weeklyTimeSpent)} total time spent, Avg. Distractions: ${weeklyAvgDistractions}</p>
         <p><strong>Last 30 Days:</strong> ${monthlyTasks} tasks completed, ${formatTime(monthlyTimeSpent)} total time spent, Avg. Distractions: ${monthlyAvgDistractions}</p>
@@ -435,7 +551,6 @@
       renderTasks();
       renderHistory();
       renderStats();
-      console.log("History data:", history); // Debugging: Check history in console
     };
   </script>
 </body>
