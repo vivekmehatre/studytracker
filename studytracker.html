@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Study Tracker with Visible Stats</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .task-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .task-form input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .task-form button {
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      background: #4caf50;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .task-form button:hover {
+      background: #45a049;
+    }
+    .task-list {
+      margin-bottom: 20px;
+    }
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .task-item:last-child {
+      border-bottom: none;
+    }
+    .timer-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .timer-display {
+      font-size: 2em;
+      margin: 10px 0;
+    }
+    .countdown-display {
+      font-size: 1.5em;
+      color: #d9534f;
+      margin-bottom: 10px;
+    }
+    .btn-group button {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    .btn-group button:hover {
+      background: #0069d9;
+    }
+    .deadline-edit {
+      margin-top: 10px;
+    }
+    .deadline-edit input {
+      padding: 8px;
+      width: 60%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-right: 5px;
+    }
+    .distraction-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .distraction-section input {
+      padding: 8px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-right: 5px;
+    }
+    .distraction-section button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      background: #f0ad4e;
+      color: white;
+      cursor: pointer;
+    }
+    .history-section, .stats-section {
+      margin-top: 20px;
+    }
+    .history-section ul, .stats-section div {
+      padding: 0;
+    }
+    .history-section li {
+      background: #fafafa;
+      border: 1px solid #eee;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .stats-section {
+      background: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .stats-section h3 {
+      margin-top: 0;
+    }
+    .stats-section p {
+      margin: 5px 0;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Study Tracker</h1>
+    
+    <!-- Add Task Form -->
+    <div class="task-form">
+      <input type="text" id="new-task" placeholder="Enter task description" />
+      <input type="number" id="task-deadline" placeholder="Time limit in minutes" min="1" />
+      <button onclick="addTask()">Add Task</button>
+    </div>
+    
+    <!-- Task List -->
+    <div class="task-list" id="task-list">
+      <h2>Tasks</h2>
+    </div>
+    
+    <!-- Timer Section -->
+    <div class="timer-section" id="timer-section" style="display:none;">
+      <h2>Current Task: <span id="current-task-name"></span></h2>
+      <div class="timer-display" id="timer-display">00:00:00</div>
+      <div class="countdown-display" id="countdown-display"></div>
+      <div class="btn-group">
+        <button onclick="startTimer()">Start Timer</button>
+        <button onclick="pauseTimer()">Pause Timer</button>
+        <button onclick="resetTimer()">Reset Timer</button>
+        <button onclick="completeTask()">Complete Task</button>
+      </div>
+      <div class="deadline-edit">
+        <input type="number" id="edit-deadline" placeholder="New total time limit (min)" min="1" />
+        <button onclick="updateDeadline()">Update Deadline</button>
+      </div>
+    </div>
+    
+    <!-- Distraction Logger -->
+    <div class="distraction-section" id="distraction-section" style="display:none;">
+      <p>Distractions: <span id="distraction-count">0</span></p>
+      <input type="text" id="distraction-input" placeholder="Enter distraction reason" />
+      <button onclick="logDistraction()">Log Distraction</button>
+    </div>
+    
+    <!-- Task History -->
+    <div class="history-section">
+      <h2>Task History</h2>
+      <ul id="history-list"></ul>
+    </div>
+    
+    <!-- Task Statistics -->
+    <div class="stats-section" id="stats-section">
+      <h3>Task Statistics</h3>
+      <div id="stats-display"></div>
+    </div>
+  </div>
+  
+  <script>
+    // Data storage
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let history = JSON.parse(localStorage.getItem('taskHistory')) || [];
+    let currentTask = null;
+    let timerInterval = null;
+    let elapsedSeconds = 0;
+    let remainingSeconds = 0;
+    let distractionLog = [];
+
+    // Utility: Format seconds as HH:MM:SS
+    function formatTime(sec) {
+      let h = Math.floor(sec / 3600).toString().padStart(2, '0');
+      let m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+      let s = (sec % 60).toString().padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    // Parse time string (HH:MM:SS) to seconds
+    function parseTimeToSeconds(timeStr) {
+      const [h, m, s] = timeStr.split(':').map(Number);
+      return h * 3600 + m * 60 + s;
+    }
+
+    // Add new task
+    function addTask() {
+      const taskDesc = document.getElementById('new-task').value.trim();
+      const deadline = parseInt(document.getElementById('task-deadline').value);
+      if (!taskDesc || isNaN(deadline) || deadline <= 0) {
+        alert("Please enter a valid task and time limit (in minutes).");
+        return;
+      }
+      const task = {
+        id: Date.now(),
+        description: taskDesc,
+        timeLimit: deadline * 60,
+        created: new Date().toLocaleString()
+      };
+      tasks.push(task);
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      renderTasks();
+      document.getElementById('new-task').value = "";
+      document.getElementById('task-deadline').value = "";
+    }
+
+    // Render task list
+    function renderTasks() {
+      const taskList = document.getElementById('task-list');
+      taskList.innerHTML = "<h2>Tasks</h2>";
+      if (tasks.length === 0) {
+        taskList.innerHTML += "<p>No tasks added.</p>";
+        return;
+      }
+      tasks.forEach(task => {
+        const div = document.createElement('div');
+        div.className = "task-item";
+        const span = document.createElement('span');
+        span.textContent = `${task.description} (Deadline: ${Math.floor(task.timeLimit / 60)} min)`;
+        const button = document.createElement('button');
+        button.textContent = 'Start';
+        button.onclick = () => selectTask(task.id);
+        div.appendChild(span);
+        div.appendChild(button);
+        taskList.appendChild(div);
+      });
+    }
+
+    // Select a task
+    function selectTask(taskId) {
+      currentTask = tasks.find(t => t.id === taskId);
+      if (!currentTask) return;
+      document.getElementById('timer-section').style.display = "block";
+      document.getElementById('distraction-section').style.display = "block";
+      document.getElementById('current-task-name').innerText = currentTask.description;
+      elapsedSeconds = 0;
+      remainingSeconds = currentTask.timeLimit;
+      distractionLog = [];
+      document.getElementById('timer-display').innerText = formatTime(elapsedSeconds);
+      document.getElementById('countdown-display').innerText = formatTime(remainingSeconds) + " remaining";
+      document.getElementById('distraction-count').innerText = distractionLog.length;
+      document.getElementById('task-list').style.display = "none";
+    }
+
+    // Start timer
+    function startTimer() {
+      if (!currentTask) return;
+      if (!timerInterval) {
+        timerInterval = setInterval(() => {
+          elapsedSeconds++;
+          document.getElementById('timer-display').innerText = formatTime(elapsedSeconds);
+          if (remainingSeconds > 0) {
+            remainingSeconds--;
+            document.getElementById('countdown-display').innerText = formatTime(remainingSeconds) + " remaining";
+          } else {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            alert("Deadline reached for this task!");
+          }
+        }, 1000);
+      }
+    }
+
+    // Pause timer
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    // Reset timer
+    function resetTimer() {
+      pauseTimer();
+      elapsedSeconds = 0;
+      remainingSeconds = currentTask ? currentTask.timeLimit : 0;
+      document.getElementById('timer-display').innerText = formatTime(elapsedSeconds);
+      document.getElementById('countdown-display').innerText = formatTime(remainingSeconds) + " remaining";
+      distractionLog = [];
+      document.getElementById('distraction-count').innerText = distractionLog.length;
+    }
+
+    // Complete task
+    function completeTask() {
+      if (!currentTask) return;
+      pauseTimer();
+      const record = {
+        task: currentTask.description,
+        timeSpent: formatTime(elapsedSeconds),
+        originalDeadline: formatTime(currentTask.timeLimit),
+        distractions: distractionLog,
+        completedAt: new Date().toLocaleString()
+      };
+      history.push(record);
+      localStorage.setItem('taskHistory', JSON.stringify(history));
+      tasks = tasks.filter(t => t.id !== currentTask.id);
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      currentTask = null;
+      elapsedSeconds = 0;
+      remainingSeconds = 0;
+      distractionLog = [];
+      document.getElementById('timer-section').style.display = "none";
+      document.getElementById('distraction-section').style.display = "none";
+      document.getElementById('task-list').style.display = "block";
+      renderTasks();
+      renderHistory();
+      renderStats();
+      alert("Task completed and saved to history!");
+    }
+
+    // Update deadline
+    function updateDeadline() {
+      let newDeadlineInput = parseInt(document.getElementById("edit-deadline").value);
+      if (isNaN(newDeadlineInput) || newDeadlineInput <= 0) {
+        alert("Please enter a valid time limit in minutes.");
+        return;
+      }
+      let newTotalSeconds = newDeadlineInput * 60;
+      if (newTotalSeconds < elapsedSeconds) {
+        alert("New deadline must be greater than the elapsed time.");
+        return;
+      }
+      remainingSeconds = newTotalSeconds - elapsedSeconds;
+      currentTask.timeLimit = newTotalSeconds;
+      document.getElementById("countdown-display").innerText = formatTime(remainingSeconds) + " remaining";
+      document.getElementById("edit-deadline").value = "";
+      alert("Deadline updated!");
+    }
+
+    // Log distraction
+    function logDistraction() {
+      let distractionReason = document.getElementById("distraction-input").value.trim();
+      if (!distractionReason) {
+        alert("Please enter the distraction reason.");
+        return;
+      }
+      distractionLog.push(distractionReason);
+      document.getElementById('distraction-count').innerText = distractionLog.length;
+      document.getElementById("distraction-input").value = "";
+    }
+
+    // Render history
+    function renderHistory() {
+      const historyList = document.getElementById('history-list');
+      historyList.innerHTML = "";
+      if (history.length === 0) {
+        historyList.innerHTML = "<li>No history yet.</li>";
+        return;
+      }
+      history.forEach(record => {
+        const li = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = record.task;
+        li.appendChild(strong);
+        li.appendChild(document.createTextNode(` - Time Spent: ${record.timeSpent} (Deadline: ${record.originalDeadline}) | Distractions: ${record.distractions.length} [${record.distractions.join(", ")}] | Completed: ${record.completedAt}`));
+        historyList.appendChild(li);
+      });
+    }
+
+    // Render statistics
+    function renderStats() {
+      const statsDisplay = document.getElementById('stats-display');
+      statsDisplay.innerHTML = "";
+
+      if (history.length === 0) {
+        statsDisplay.innerHTML = "<p>No tasks completed yet. Start completing tasks to see stats!</p>";
+        return;
+      }
+
+      const now = new Date();
+      const oneWeekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+      // Filter by date range
+      const filterByDate = (startDate) => history.filter(record => new Date(record.completedAt) >= startDate);
+
+      // Weekly stats
+      const weeklyRecords = filterByDate(oneWeekAgo);
+      const weeklyTasks = weeklyRecords.length;
+      const weeklyTimeSpent = weeklyRecords.reduce((sum, r) => sum + parseTimeToSeconds(r.timeSpent), 0);
+      const weeklyDistractions = weeklyRecords.reduce((sum, r) => sum + r.distractions.length, 0);
+      const weeklyAvgDistractions = weeklyTasks > 0 ? (weeklyDistractions / weeklyTasks).toFixed(2) : 0;
+
+      // Monthly stats
+      const monthlyRecords = filterByDate(oneMonthAgo);
+      const monthlyTasks = monthlyRecords.length;
+      const monthlyTimeSpent = monthlyRecords.reduce((sum, r) => sum + parseTimeToSeconds(r.timeSpent), 0);
+      const monthlyDistractions = monthlyRecords.reduce((sum, r) => sum + r.distractions.length, 0);
+      const monthlyAvgDistractions = monthlyTasks > 0 ? (monthlyDistractions / monthlyTasks).toFixed(2) : 0;
+
+      // Display stats
+      statsDisplay.innerHTML = `
+        <p><strong>Last 7 Days:</strong> ${weeklyTasks} tasks completed, ${formatTime(weeklyTimeSpent)} total time spent, Avg. Distractions: ${weeklyAvgDistractions}</p>
+        <p><strong>Last 30 Days:</strong> ${monthlyTasks} tasks completed, ${formatTime(monthlyTimeSpent)} total time spent, Avg. Distractions: ${monthlyAvgDistractions}</p>
+      `;
+    }
+
+    // Initialize on page load
+    window.onload = function() {
+      renderTasks();
+      renderHistory();
+      renderStats();
+      console.log("History data:", history); // Debugging: Check history in console
+    };
+  </script>
+</body>
+</html>
